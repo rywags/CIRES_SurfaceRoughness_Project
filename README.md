@@ -9,5 +9,5 @@ Python methods to download GoLIVE and Landsat 8 data, and process to quantify a 
   ```conda activate surfaceroughness_env```  
 
   To end:  
-  ```conda deactivate surfaceroughness_env```  
+  ```conda deactivate```  
   ```conda remove --name surfaceroughness_env --all```  
