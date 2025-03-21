@@ -13,8 +13,8 @@ import rasterio.windows
 
 
 def main() -> None:
-    LONGITUDES = np.arange(start=-85.0, stop=-110.0, step=-0.5)
-    LATITUDES = np.arange(start=-74.5, stop=-79.5, step=-0.25)
+    LONGITUDES = np.arange(start=-85.0, stop=-110.0, step=-0.05)
+    LATITUDES = np.arange(start=-74.5, stop=-79.5, step=-0.025)
 
     LONGITUDES_GRID, LATITUDES_GRID = np.meshgrid(LONGITUDES, LATITUDES)
     WGS84_PROJECTION = pyproj.CRS("EPSG:4326")
@@ -51,8 +51,12 @@ def main() -> None:
             path, row, yyyydoy_date = PATHROW_PATTERN.match(directory).groups()
             yyyymmdd_date = datetime.strptime(yyyydoy_date, "%Y%j").strftime("%Y%m%d")
 
-            filtered_image = os.path.join(directory, f"filtered_image_{yyyydoy_date}.TIF")
-            correlation_image = os.path.join(directory, f"correlation_image_{yyyydoy_date}.TIF")
+            filtered_image = os.path.join(
+                directory, f"filtered_image_{yyyydoy_date}.TIF"
+            )
+            correlation_image = os.path.join(
+                directory, f"correlation_image_{yyyydoy_date}.TIF"
+            )
 
             landsat_tarpath = f"E:\\Surface_Roughness_Data\\p{path}_r{row}\\earthexplorer\\LC08_L1GT_{path}{row}_{yyyymmdd_date}_*_02_T2.tar"
             landsat_tarfile = glob.glob(landsat_tarpath)[0]
@@ -94,22 +98,38 @@ def main() -> None:
                         rema_value = REMA_ELEVATION.read(1, window=rema_window)[0][0]
 
                         rema_long2, rema_lat2 = REMA_MAGNITUDE.index(lon, lat)
-                        rema_window2 = rasterio.windows.Window(rema_long2, rema_lat2, 1, 1)
+                        rema_window2 = rasterio.windows.Window(
+                            rema_long2, rema_lat2, 1, 1
+                        )
                         rema_value2 = REMA_MAGNITUDE.read(1, window=rema_window2)[0][0]
 
                         rema_long3, rema_lat3 = REMA_DIRECTION.index(lon, lat)
-                        rema_window3 = rasterio.windows.Window(rema_long3, rema_lat3, 1, 1)
+                        rema_window3 = rasterio.windows.Window(
+                            rema_long3, rema_lat3, 1, 1
+                        )
                         rema_value3 = REMA_DIRECTION.read(1, window=rema_window3)[0][0]
 
                         filtered_long, filtered_lat = filtered.index(lon, lat)
-                        filtered_window = rasterio.windows.Window(filtered_long, filtered_lat, 1, 1)
+                        filtered_window = rasterio.windows.Window(
+                            filtered_long, filtered_lat, 1, 1
+                        )
                         filtered_read = filtered.read(1, window=filtered_window)
-                        filtered_value = filtered_read[0][0] if filtered_read.size > 0 else np.nan
+                        filtered_value = (
+                            filtered_read[0][0] if filtered_read.size > 0 else np.nan
+                        )
 
                         correlation_long, correlation_lat = correlation.index(lon, lat)
-                        correlation_window = rasterio.windows.Window(correlation_long, correlation_lat, 1, 1)
-                        correlation_read = correlation.read(1, window=correlation_window)
-                        correlation_value = correlation_read[0][0] if correlation_read.size > 0 else np.nan
+                        correlation_window = rasterio.windows.Window(
+                            correlation_long, correlation_lat, 1, 1
+                        )
+                        correlation_read = correlation.read(
+                            1, window=correlation_window
+                        )
+                        correlation_value = (
+                            correlation_read[0][0]
+                            if correlation_read.size > 0
+                            else np.nan
+                        )
 
                         # **Transform back to global coordinates**
                         wgs84_lon, wgs84_lat = ANTARCTIC_TO_WGS84.transform(lon, lat)
@@ -118,19 +138,23 @@ def main() -> None:
                         wgs84_lon = round(wgs84_lon, 2)
                         wgs84_lat = round(wgs84_lat, 2)
 
-                        data_list.append({
-                            "Longitude (WGS84)": wgs84_lon,
-                            "Latitude (WGS84)": wgs84_lat,
-                            "Filtered Value": filtered_value,
-                            "Correlation Value": correlation_value,
-                            "Solar Elevation": sun_elevation,
-                            "REMA Elevation": rema_value,
-                            "REMA Slope Magnitude": rema_value2,
-                            "REMA Slope Direction": rema_value3
-                        })
+                        data_list.append(
+                            {
+                                "Longitude (WGS84)": wgs84_lon,
+                                "Latitude (WGS84)": wgs84_lat,
+                                "Filtered Value": filtered_value,
+                                "Correlation Value": correlation_value,
+                                "Solar Elevation": sun_elevation,
+                                "REMA Elevation": rema_value,
+                                "REMA Slope Magnitude": rema_value2,
+                                "REMA Slope Direction": rema_value3,
+                            }
+                        )
 
             # Save data to a CSV file in the corresponding directory
-            output_filename = os.path.join(directory, f"P{path}R{row}_{yyyydoy_date}.csv")
+            output_filename = os.path.join(
+                directory, f"P{path}R{row}_{yyyydoy_date}.csv"
+            )
             df = pd.DataFrame(data_list)
             df.to_csv(output_filename, index=False)
             print(f"Data saved to {output_filename}")
